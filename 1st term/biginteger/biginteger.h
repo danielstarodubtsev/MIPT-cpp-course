@@ -11,11 +11,11 @@ const int kBaseLength = 9;
 
 enum Sign { positive, negative };
 
-Sign operator! (const Sign& sign) {
+Sign operator!(const Sign& sign) {
   return sign == positive ? negative : positive;
 }
 
-Sign operator* (const Sign& first, const Sign& second) {
+Sign operator*(const Sign& first, const Sign& second) {
   return (first == negative || second == negative) &&
          (first == positive || second == positive) ? negative : positive;
 }
@@ -41,12 +41,14 @@ class BigInteger {
       digits_.push_back(std::abs((int)(num % kBase)));
       num /= kBase;
     }
+
+    NormalizeDigits();
   }
 
   BigInteger(std::vector<long long> digits, Sign sign) : digits_(digits), sign_(sign) {}
 
  public:
-  BigInteger operator- () const {
+  BigInteger operator-() const {
     if (digits_.size() > 1 || digits_[0] != 0) {
       return BigInteger{digits_, !sign_};
     }
@@ -54,7 +56,7 @@ class BigInteger {
     return BigInteger{digits_, positive};
   }
 
-  BigInteger& operator+= (const BigInteger& second_num) {
+  BigInteger& operator+=(const BigInteger& second_num) {
     BigInteger num{second_num};
     std::vector<long long> res_digits;
     int extra = 0;
@@ -137,11 +139,11 @@ class BigInteger {
     return *this;
   }
 
-  BigInteger& operator-= (const BigInteger& second_num) {
+  BigInteger& operator-=(const BigInteger& second_num) {
     return *this += -second_num;
   }
 
-  BigInteger& operator*= (const BigInteger& second_num) {
+  BigInteger& operator*=(const BigInteger& second_num) {
     if (second_num.digits_.size() == 1 && second_num.digits_[0] == 0) {
       digits_.clear();
       digits_.push_back(0);
@@ -161,9 +163,11 @@ class BigInteger {
     for (size_t i = 0; i < second_num.digits_.size(); ++i) {
       for (size_t j = 0; j < copy.digits_.size(); ++j) {
         digits_[i + j] += second_num.digits_[i] * copy.digits_[j];
+
         if (digits_[i + j] >= kBase) {
           long long carry = digits_[i + j] / kBase;
           digits_[i + j] %= kBase;
+
           if (i + j + 1 != digits_.size()) {
             digits_[i + j + 1] += carry;
           }
@@ -172,11 +176,10 @@ class BigInteger {
     }
 
     NormalizeDigits();
-
     return *this;
   }
 
-  BigInteger& operator/= (const BigInteger& second_num) {
+  BigInteger& operator/=(const BigInteger& second_num) {
     std::vector<long long> res_digits;
     BigInteger current = 0;
     Sign res_sign = sign_ * second_num.sign_;
@@ -190,16 +193,19 @@ class BigInteger {
       int upper = kBase;
       int middle;
       BigInteger possible_res;
+
       while (lower < upper - 1) {
         middle = (lower + upper) / 2;
         possible_res = num;
         possible_res *= middle;
+
         if (possible_res <= current) {
           lower = middle;
         } else {
           upper = middle;
         }
       }
+
       res_digits.push_back(lower);
       possible_res = num;
       possible_res *= lower;
@@ -212,38 +218,37 @@ class BigInteger {
     sign_ = res_sign;
 
     NormalizeDigits();
-    
     return *this;
   }
 
-  BigInteger& operator%= (const BigInteger& second_num) {
+  BigInteger& operator%=(const BigInteger& second_num) {
     BigInteger dividable_part = *this;
     dividable_part /= second_num;
     dividable_part *= second_num;
     return *this -= dividable_part;
   }
 
-  BigInteger operator++ (int) {
+  BigInteger operator++(int) {
     BigInteger temp = *this;
     *this += 1;
     return temp;
   }
 
-  BigInteger operator-- (int) {
+  BigInteger operator--(int) {
     BigInteger temp = *this;
     *this -= 1;
     return temp;
   }
 
-  BigInteger& operator++ () {
+  BigInteger& operator++() {
     return *this += 1;
   }
 
-  BigInteger& operator-- () {
+  BigInteger& operator--() {
     return *this -= 1;
   }
 
-  BigInteger& operator= (const BigInteger& num)  = default;
+  BigInteger& operator=(const BigInteger& num) = default;
 
   std::string toString() const {
     std::string result = std::to_string(digits_.back());
@@ -263,7 +268,9 @@ class BigInteger {
     return sign_ == negative ? "-" + result : result;
   }
 
-  BigInteger() {}
+  BigInteger() {
+    NormalizeDigits();
+  }
 
   BigInteger(int num) {
     sign_ = (num < 0) ? negative : positive;
@@ -299,50 +306,50 @@ class BigInteger {
     return digits_.size() != 1 || digits_[0] != 0;
   }
 
-  friend bool operator== (const BigInteger& first_num, const BigInteger& second_num);
-  friend bool operator< (const BigInteger& first_num, const BigInteger& second_num);
-  friend bool operator<= (const BigInteger& first_num, const BigInteger& second_num);
+  friend bool operator==(const BigInteger&, const BigInteger&);
+  friend bool operator<(const BigInteger&, const BigInteger&);
+  friend bool operator<=(const BigInteger&, const BigInteger&);
 };
 
-BigInteger operator+ (const BigInteger& num1, const BigInteger& num2) {
+BigInteger operator+(const BigInteger& num1, const BigInteger& num2) {
   BigInteger result = num1;
   result += num2;
   return result;
 }
 
-BigInteger operator- (const BigInteger& num1, const BigInteger& num2) {
+BigInteger operator-(const BigInteger& num1, const BigInteger& num2) {
   BigInteger result = num1;
   result -= num2;
   return result;
 }
 
-BigInteger operator* (const BigInteger& num1, const BigInteger& num2) {
+BigInteger operator*(const BigInteger& num1, const BigInteger& num2) {
   BigInteger result = num1;
   result *= num2;
   return result;
 }
 
-BigInteger operator/ (const BigInteger& num1, const BigInteger& num2) {
+BigInteger operator/(const BigInteger& num1, const BigInteger& num2) {
   BigInteger result = num1;
   result /= num2;
   return result;
 }
 
-BigInteger operator% (const BigInteger& num1, const BigInteger& num2) {
+BigInteger operator%(const BigInteger& num1, const BigInteger& num2) {
   BigInteger result = num1;
   result %= num2;
   return result;
 }
 
-bool operator== (const BigInteger& first_num, const BigInteger& second_num) {
+bool operator==(const BigInteger& first_num, const BigInteger& second_num) {
   return first_num.digits_ == second_num.digits_ && first_num.sign_ == second_num.sign_;
 }
 
-bool operator!= (const BigInteger& first_num, const BigInteger& second_num) {
+bool operator!=(const BigInteger& first_num, const BigInteger& second_num) {
   return !(first_num == second_num);
 }
 
-bool operator< (const BigInteger& first_num, const BigInteger& second_num) {
+bool operator<(const BigInteger& first_num, const BigInteger& second_num) {
   if ((first_num.sign_ == negative && second_num.sign_ == positive) ||
       (first_num.sign_ == positive && second_num.sign_ == positive && 
        first_num.digits_.size() < second_num.digits_.size()) ||
@@ -374,15 +381,15 @@ bool operator< (const BigInteger& first_num, const BigInteger& second_num) {
   return false;
 }
 
-bool operator> (const BigInteger& first_num, const BigInteger& second_num) {
+bool operator>(const BigInteger& first_num, const BigInteger& second_num) {
   return second_num < first_num;
 }
 
-bool operator<= (const BigInteger& first_num, const BigInteger& second_num) {
+bool operator<=(const BigInteger& first_num, const BigInteger& second_num) {
   return !(second_num < first_num);
 }
 
-bool operator>= (const BigInteger& first_num, const BigInteger& second_num) {
+bool operator>=(const BigInteger& first_num, const BigInteger& second_num) {
   return !(first_num < second_num);
 }
 
@@ -390,16 +397,16 @@ BigInteger operator"" _bi(unsigned long long num) {
   return BigInteger{num};
 }
 
-BigInteger operator"" _bi(const char* str) {
+BigInteger operator"" _bi(const char* str, size_t) {
   return BigInteger{std::string{str}};
 }
 
-std::ostream& operator<< (std::ostream& output_stream, const BigInteger& num) {
+std::ostream& operator<<(std::ostream& output_stream, const BigInteger& num) {
   output_stream << num.toString();
   return output_stream;
 }
 
-std::istream& operator>> (std::istream& input_stream, BigInteger& num) {
+std::istream& operator>>(std::istream& input_stream, BigInteger& num) {
   std::string string;
   input_stream >> string;
   num = string;
@@ -410,6 +417,7 @@ BigInteger Gcd(BigInteger num1, BigInteger num2) {
   if (num2 == 0) {
     return num1;
   }
+
   return Gcd(num2, num1 % num2);
 }
 
@@ -422,6 +430,7 @@ class Rational {
     BigInteger gcd = Gcd(num, denom);
     num /= gcd;
     denom /= gcd;
+
     if (denom < 0) {
       num = -num;
       denom = -denom;
@@ -429,12 +438,12 @@ class Rational {
   }
 
  public:
-  Rational operator- () const {
+  Rational operator-() const {
     Rational result{-num, denom};
     return result;
   }
 
-  Rational& operator+= (const Rational& second_frac) {
+  Rational& operator+=(const Rational& second_frac) {
     BigInteger new_num = num * second_frac.denom + denom * second_frac.num;
     BigInteger new_denom = denom * second_frac.denom;
 
@@ -444,12 +453,12 @@ class Rational {
     return *this;
   }
 
-  Rational& operator-= (const Rational& second_frac) {
+  Rational& operator-=(const Rational& second_frac) {
     *this += -second_frac;
     return *this;
   }
 
-  Rational& operator*= (const Rational& second_frac) {
+  Rational& operator*=(const Rational& second_frac) {
     BigInteger new_num = num * second_frac.num;
     BigInteger new_denom = denom * second_frac.denom;
 
@@ -459,7 +468,7 @@ class Rational {
     return *this;
   }
 
-  Rational& operator/= (const Rational& second_frac) {
+  Rational& operator/=(const Rational& second_frac) {
     BigInteger new_num = num * second_frac.denom;
     BigInteger new_denom = denom * second_frac.num;
 
@@ -469,12 +478,13 @@ class Rational {
     return *this;
   }
 
-  Rational& operator= (const Rational& fraction) = default;
+  Rational& operator=(const Rational& fraction) = default;
 
   std::string toString() const {
     if (denom == 1) {
       return num.toString();
     }
+
     return num.toString() + "/" + denom.toString();
   }
 
@@ -491,12 +501,15 @@ class Rational {
     if (with_ten_power < 0) {
       result.pop_back();
     }
+
     for (int i = result.size(); i <= (int)precision; i++) {
       result.push_back('0');
     }
+
     if (with_ten_power < 0) {
       result.push_back('-');
     }
+
     std::reverse(result.begin(), result.end());
     result.insert(result.end() - precision, '.');
     return result;
@@ -522,59 +535,59 @@ class Rational {
 
   Rational(const Rational& fraction) = default;
 
-  friend bool operator== (const Rational& first_frac, const Rational& second_frac);
-  friend bool operator< (const Rational& first_frac, const Rational& second_frac);
+  friend bool operator==(const Rational&, const Rational&);
+  friend bool operator<(const Rational&, const Rational&);
 };
 
-Rational operator+ (const Rational& first_frac, const Rational& second_frac) {
+Rational operator+(const Rational& first_frac, const Rational& second_frac) {
   Rational result = first_frac;
   result += second_frac;
   return result;
 }
 
-Rational operator- (const Rational& first_frac, const Rational& second_frac) {
+Rational operator-(const Rational& first_frac, const Rational& second_frac) {
   Rational result = first_frac;
   result -= second_frac;
   return result;
 }
 
-Rational operator* (const Rational& first_frac, const Rational& second_frac) {
+Rational operator*(const Rational& first_frac, const Rational& second_frac) {
   Rational result = first_frac;
   result *= second_frac;
   return result;
 }
 
-Rational operator/ (const Rational& first_frac, const Rational& second_frac) {
+Rational operator/(const Rational& first_frac, const Rational& second_frac) {
   Rational result = first_frac;
   result /= second_frac;
   return result;
 }
 
-bool operator== (const Rational& first_frac, const Rational& second_frac) {
+bool operator==(const Rational& first_frac, const Rational& second_frac) {
   return first_frac.num == second_frac.num && first_frac.denom == second_frac.denom;
 }
 
-bool operator!= (const Rational& first_frac, const Rational& second_frac) {
+bool operator!=(const Rational& first_frac, const Rational& second_frac) {
   return !(first_frac == second_frac);
 }
 
-bool operator< (const Rational& first_frac, const Rational& second_frac) {
+bool operator<(const Rational& first_frac, const Rational& second_frac) {
   return first_frac.num * second_frac.denom < first_frac.denom * second_frac.num;
 }
 
-bool operator> (const Rational& first_frac, const Rational& second_frac) {
+bool operator>(const Rational& first_frac, const Rational& second_frac) {
   return second_frac < first_frac;
 }
 
-bool operator<= (const Rational& first_frac, const Rational& second_frac) {
+bool operator<=(const Rational& first_frac, const Rational& second_frac) {
   return !(second_frac < first_frac);
 }
 
-bool operator>= (const Rational& first_frac, const Rational& second_frac) {
+bool operator>=(const Rational& first_frac, const Rational& second_frac) {
   return !(first_frac < second_frac);
 }
 
-std::ostream& operator<< (std::ostream& output_stream, const Rational& num) {
+std::ostream& operator<<(std::ostream& output_stream, const Rational& num) {
   output_stream << num.toString();
   return output_stream;
 }
